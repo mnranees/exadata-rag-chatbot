@@ -7,9 +7,9 @@ langchain-text-splitters
 langchain-google-genai
 langchain-chroma
 langchain-huggingface
+langchain-openai
 chromadb
 pypdf
 requests
 beautifulsoup4
 sentence-transformers
-langchain-openai

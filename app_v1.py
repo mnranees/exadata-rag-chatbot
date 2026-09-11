@@ -64,14 +64,27 @@ with st.sidebar:
 
     llm_provider = st.selectbox(
         "LLM provider",
-        options=["OpenAI-compatible", "Google Gemini"],
+        options=[
+            "No LLM - Documentation Search",
+            "OpenAI-compatible",
+            "Google Gemini",
+        ],
         help=(
-            "Use OpenAI-compatible for OpenAI or any compatible enterprise/local endpoint "
-            "such as OCI gateways, vLLM, or Ollama."
+            "Select No LLM when you do not have an API key. "
+            "OpenAI-compatible supports OpenAI and other compatible endpoints."
         ),
     )
 
-    if llm_provider == "OpenAI-compatible":
+    if llm_provider == "No LLM - Documentation Search":
+        llm_model = ""
+        llm_base_url = ""
+        llm_api_key = ""
+        st.info(
+            "🔎 No LLM mode: retrieve the most relevant Oracle documentation chunks "
+            "and show their source links without generating an LLM answer."
+        )
+
+    elif llm_provider == "OpenAI-compatible":
         llm_model = st.text_input(
             "Model name",
             value=os.getenv("LLM_MODEL", "gpt-4o-mini"),
@@ -80,10 +93,7 @@ with st.sidebar:
         llm_base_url = st.text_input(
             "Base URL (optional)",
             value=os.getenv("LLM_BASE_URL", "https://api.openai.com/v1"),
-            help=(
-                "OpenAI-compatible API base URL. Examples: OpenAI, an OCI gateway, "
-                "vLLM, or Ollama."
-            ),
+            help="OpenAI-compatible API base URL.",
         )
         llm_api_key = st.text_input(
             "API key",
@@ -91,6 +101,7 @@ with st.sidebar:
             type="password",
             help="Leave blank only when your endpoint does not require authentication.",
         )
+
     else:
         llm_model = st.text_input(
             "Gemini model",
@@ -125,7 +136,7 @@ if st.session_state.get("selected_platform") != selected_platform:
     st.session_state.selected_platform = selected_platform
     st.session_state.messages = []
 
-if not llm_model.strip():
+if llm_provider not in ("No LLM - Documentation Search",) and not llm_model.strip():
     st.info("Please enter an LLM model name in the sidebar to begin.")
     st.stop()
 
@@ -160,6 +171,9 @@ retriever = db.as_retriever(search_kwargs={"k": 5})
 
 @st.cache_resource
 def build_llm(provider, model, api_key, base_url, temperature):
+    if provider == "No LLM - Documentation Search":
+        return None
+
     if provider == "Google Gemini":
         return ChatGoogleGenerativeAI(
             model=model,
@@ -203,8 +217,10 @@ prompt = ChatPromptTemplate.from_messages([
     ("human", "{input}"),
 ])
 
-question_answer_chain = create_stuff_documents_chain(llm, prompt)
-rag_chain = create_retrieval_chain(retriever, question_answer_chain)
+rag_chain = None
+if llm is not None:
+    question_answer_chain = create_stuff_documents_chain(llm, prompt)
+    rag_chain = create_retrieval_chain(retriever, question_answer_chain)
 
 for msg in st.session_state.get("messages", []):
     with st.chat_message(msg["role"]):
@@ -218,31 +234,53 @@ if user_query := st.chat_input(f"Ask a technical question about {selected_platfo
     with st.chat_message("assistant"):
         with st.spinner(f"Searching {selected_platform} documentation..."):
             try:
-                response = rag_chain.invoke({"input": user_query})
-                assistant_response = response["answer"]
-                source_docs = response.get("context", response.get("source_documents", []))
+                if llm_provider == "No LLM - Documentation Search":
+                    source_docs = retriever.invoke(user_query)
+                    if not source_docs:
+                        full_output = "No relevant documentation was found."
+                    else:
+                        parts = [f"### 🔎 Relevant {selected_platform} Documentation"]
+                        for idx, doc in enumerate(source_docs, 1):
+                            source = doc.metadata.get("source", "Unknown source")
+                            title = (
+                                doc.metadata.get("title")
+                                or doc.metadata.get("document_title")
+                                or source.rsplit("/", 1)[-1]
+                            )
+                            content = doc.page_content.strip()
+                            if len(content) > 1600:
+                                content = content[:1600] + "..."
+                            parts.append(
+                                f"\n#### Result {idx}: {title}\n\n{content}\n\n**Source:** [{title}]({source})\n\n---"
+                            )
+                        full_output = "\n".join(parts)
+                else:
+                    response = rag_chain.invoke({"input": user_query})
+                    assistant_response = response["answer"]
+                    source_docs = response.get("context", response.get("source_documents", []))
 
-                citation_lines = []
-                seen_sources = set()
-                for doc in source_docs:
-                    source = doc.metadata.get("source")
-                    if not source or source in seen_sources:
-                        continue
-                    seen_sources.add(source)
+                    citation_lines = []
+                    seen_sources = set()
+                    for doc in source_docs:
+                        source = doc.metadata.get("source")
+                        if not source or source in seen_sources:
+                            continue
+                        seen_sources.add(source)
 
-                    title = (
-                        doc.metadata.get("title")
-                        or doc.metadata.get("document_title")
-                        or source.rsplit("/", 1)[-1]
-                        or source
-                    )
-                    citation_lines.append(f"- [{title}]({source})")
+                        title = (
+                            doc.metadata.get("title")
+                            or doc.metadata.get("document_title")
+                            or source.rsplit("/", 1)[-1]
+                            or source
+                        )
+                        citation_lines.append(f"- [{title}]({source})")
 
-                citation_text = ""
-                if citation_lines:
-                    citation_text = "\n\n**📚 Source References:**\n" + "\n".join(citation_lines)
+                    citation_text = ""
+                    if citation_lines:
+                        citation_text = "\n\n**📚 Source References:**\n" + "\n".join(citation_lines)
 
-                full_output = assistant_response + citation_text
+                    full_output = assistant_response + citation_text
+
                 st.markdown(full_output)
             except Exception as exc:
                 full_output = (
