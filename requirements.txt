@@ -1,0 +1,15 @@
+streamlit
+langchain
+langchain-community
+langchain-classic
+langchain-core
+langchain-text-splitters
+langchain-google-genai
+langchain-chroma
+langchain-huggingface
+chromadb
+pypdf
+requests
+beautifulsoup4
+sentence-transformers
+langchain-openai
