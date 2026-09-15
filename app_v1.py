@@ -12,8 +12,35 @@ from langchain_classic.chains.combine_documents import create_stuff_documents_ch
 from langchain_google_genai import ChatGoogleGenerativeAI
 from langchain_openai import ChatOpenAI
 
-st.set_page_config(page_title="Oracle Exadata RAG", layout="wide")
-st.title("🤖 Oracle Exadata RAG Chatbot")
+st.set_page_config(
+    page_title="Exadata Chatbot",
+    page_icon="🤖",
+    layout="wide"
+)
+
+st.title("🤖 Exadata Chatbot")
+
+st.markdown(
+    """
+    <div style="
+        background-color: #fff1f0;
+        border: 1px solid #ff4d4f;
+        border-left: 5px solid #d32f2f;
+        padding: 12px 16px;
+        border-radius: 6px;
+        margin-bottom: 20px;
+        color: #b71c1c;
+        font-weight: 600;
+    ">
+    ⚠️ <strong>Important:</strong>
+    This chatbot is created using publicly available Oracle documentation only.
+    It displays results exclusively from public documentation.
+    No Oracle internal documentation, internal systems, or other internal sources
+    are used by this chatbot.
+    </div>
+    """,
+    unsafe_allow_html=True,
+)
 
 PLATFORMS = {
     "Exadata On-Prem": {
