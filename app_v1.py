@@ -105,8 +105,8 @@ with st.sidebar:
     else:
         llm_model = st.text_input(
             "Gemini model",
-            value=os.getenv("GEMINI_MODEL", "gemini-2.5-flash"),
-            help="Example: gemini-2.5-flash",
+            value=os.getenv("GEMINI_MODEL", "gemini-3.5-flash"),
+            help="Example: gemini-3.5-flash",
         )
         llm_base_url = ""
         llm_api_key = st.text_input(
