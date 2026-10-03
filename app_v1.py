@@ -251,6 +251,20 @@ except Exception as exc:
 retriever = db.as_retriever(search_kwargs={"k": 60})
 
 
+def is_missing_collection_error(exc):
+    message = str(exc).lower()
+    return "collection" in message and "does not exist" in message
+
+
+def refresh_vector_db():
+    """Discard stale cached Chroma handles and reconnect to the selected index."""
+    global db, retriever
+
+    load_vector_db.clear()
+    db = load_vector_db(db_folder, kb["collection_name"])
+    retriever = db.as_retriever(search_kwargs={"k": 60})
+
+
 def _query_terms(query):
     return {
         term.lower().strip(".,:;!?()[]{}\"'")
@@ -292,7 +306,9 @@ def retrieve_sr_documents(query):
                         where_document={"$contains": variant},
                     )
                 )
-            except Exception:
+            except Exception as exc:
+                if is_missing_collection_error(exc):
+                    raise
                 exact_search_failed = True
 
     unique_docs = []
@@ -310,6 +326,20 @@ def retrieve_sr_documents(query):
     if exact_search_failed:
         st.caption("Exact host/SR lookup was unavailable; showing semantic search results.")
     return unique_docs
+
+
+def retrieve_source_documents(query):
+    """Retry once with a fresh Chroma handle if the cached collection was replaced."""
+    for attempt in range(2):
+        try:
+            if selected_kb == "Service Requests":
+                return retrieve_sr_documents(query)
+            return retriever.invoke(query)
+        except Exception as exc:
+            if attempt or not is_missing_collection_error(exc):
+                raise
+            refresh_vector_db()
+            st.info("The vector index changed while the app was running; reloaded it and retried.")
 
 
 def rank_km_documents(query, docs, max_articles=5):
@@ -561,10 +591,7 @@ if user_query := st.chat_input(f"Ask a technical question about {selected_kb}...
     with st.chat_message("assistant"):
         with st.spinner(f"Searching {selected_kb}..."):
             try:
-                if selected_kb == "Service Requests":
-                    retrieved_docs = retrieve_sr_documents(user_query)
-                else:
-                    retrieved_docs = retriever.invoke(user_query)
+                retrieved_docs = retrieve_source_documents(user_query)
 
                 if selected_kb == "Oracle Knowledge":
                     ranked_articles = rank_km_documents(
