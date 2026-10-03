@@ -257,10 +257,18 @@ def is_missing_collection_error(exc):
 
 
 def refresh_vector_db():
-    """Discard stale cached Chroma handles and reconnect to the selected index."""
+    """Discard stale Streamlit and Chroma handles and reconnect to the index."""
     global db, retriever
 
     load_vector_db.clear()
+    # Chroma also caches its system by persist_directory. Clearing only the
+    # Streamlit resource leaves that system pointing at a replaced collection.
+    try:
+        from chromadb.api.shared_system_client import SharedSystemClient
+    except ImportError:
+        from chromadb.api.client import SharedSystemClient
+
+    SharedSystemClient.clear_system_cache()
     db = load_vector_db(db_folder, kb["collection_name"])
     retriever = db.as_retriever(search_kwargs={"k": 60})
 
