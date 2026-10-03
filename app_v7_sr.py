@@ -6,22 +6,7 @@ from dotenv import load_dotenv
 
 APP_DIR = Path(__file__).resolve().parent
 load_dotenv(APP_DIR / ".env")
-EMBEDDING_MODEL = "BAAI/bge-small-en-v1.5"
 
-@st.cache_resource
-def load_embedding(model_name):
-    return HuggingFaceEmbeddings(
-        model_name=model_name,
-        model_kwargs={"device": "cpu"},
-        encode_kwargs={"normalize_embeddings": True},
-    )
-
-try:
-    embedding = load_embedding(EMBEDDING_MODEL)
-except Exception as exc:
-    st.error(f"Unable to load the embedding model `{EMBEDDING_MODEL}`. Error: {exc}")
-    st.stop()
-    
 # Corporate proxy for external LLM calls when configured in .env.
 for _name in ("HTTP_PROXY", "HTTPS_PROXY", "http_proxy", "https_proxy", "NO_PROXY", "no_proxy"):
     if os.getenv(_name):
@@ -249,7 +234,7 @@ if llm_provider in {"OpenAI-compatible", "Google Gemini"} and not llm_api_key.st
 
 EMBEDDING_MODEL = os.getenv(
     "EMBEDDING_MODEL",
-    str(APP_DIR / "models" / "bge-small-en-v1.5"),
+    "BAAI/bge-small-en-v1.5",
 )
 
 @st.cache_resource
