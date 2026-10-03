@@ -11,3 +11,32 @@ __pycache__/
 .DS_Store
 
 .ipynb_checkpoints/
+# Python
+.venv/
+__pycache__/
+*.pyc
+
+# Jupyter
+.ipynb_checkpoints/
+
+# Browser/session profiles
+oracle_km_browser_profile*/
+oracle_km_test_profile/
+
+# Vector databases
+vectordb_*/
+
+# Generated Oracle KM data
+oracle_km_articles.jsonl
+oracle_km_chunks.jsonl
+oracle_km_failed.json
+
+# Generated SR data
+sr_json/
+sr_ingestion_failures.json
+
+# Generated/test files
+oracle_km_test.png
+
+# Backups
+*_backup*
