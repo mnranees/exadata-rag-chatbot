@@ -234,7 +234,7 @@ if llm_provider in {"OpenAI-compatible", "Google Gemini"} and not llm_api_key.st
 
 EMBEDDING_MODEL = os.getenv(
     "EMBEDDING_MODEL",
-    "BAAI/bge-small-en-v1.5",
+    str(APP_DIR / "models" / "bge-small-en-v1.5"),
 )
 
 @st.cache_resource
