@@ -1,0 +1,71 @@
+2026/09/28-10:51:41.668 3cf51 Creating DB /Users/aneesmaniyar/Downloads/ML_OPS/exadataragchatbot/oracle_km_browser_profile/Default/Session Storage since it was missing.
+2026/09/28-10:51:41.676 3cf51 Reusing MANIFEST /Users/aneesmaniyar/Downloads/ML_OPS/exadataragchatbot/oracle_km_browser_profile/Default/Session Storage/MANIFEST-000001
+2026/09/28-10:55:38.362 3cf55 Level-0 table #5: started
+2026/09/28-10:55:38.368 3cf55 Level-0 table #5: 102514 bytes OK
+2026/09/28-10:55:38.370 3cf55 Delete type=0 #3
+2026/09/28-11:01:20.481 3cf55 Level-0 table #7: started
+2026/09/28-11:01:20.489 3cf55 Level-0 table #7: 139538 bytes OK
+2026/09/28-11:01:20.491 3cf55 Delete type=0 #4
+2026/09/28-11:03:29.597 3cf55 Level-0 table #9: started
+2026/09/28-11:03:29.600 3cf55 Level-0 table #9: 55883 bytes OK
+2026/09/28-11:03:29.602 3cf55 Delete type=0 #6
+2026/09/28-11:05:48.847 3cf55 Level-0 table #11: started
+2026/09/28-11:05:48.851 3cf55 Level-0 table #11: 63527 bytes OK
+2026/09/28-11:05:48.855 3cf55 Delete type=0 #8
+2026/09/28-11:08:00.241 3cf55 Level-0 table #13: started
+2026/09/28-11:08:00.244 3cf55 Level-0 table #13: 58721 bytes OK
+2026/09/28-11:08:00.246 3cf55 Delete type=0 #10
+2026/09/28-11:10:19.489 3cf55 Level-0 table #15: started
+2026/09/28-11:10:19.492 3cf55 Level-0 table #15: 63452 bytes OK
+2026/09/28-11:10:19.494 3cf55 Delete type=0 #12
+2026/09/28-11:10:19.495 3cf55 Compacting 4@0 + 1@1 files
+2026/09/28-11:10:19.499 3cf55 Generated table #16@0: 26 keys, 139526 bytes
+2026/09/28-11:10:19.499 3cf55 Compacted 4@0 + 1@1 files => 139526 bytes
+2026/09/28-11:10:19.500 3cf55 compacted to: files[ 0 1 1 0 0 0 0 ]
+2026/09/28-11:10:19.500 3cf55 Delete type=2 #15
+2026/09/28-11:10:19.500 3cf55 Delete type=2 #7
+2026/09/28-11:10:19.500 3cf55 Delete type=2 #13
+2026/09/28-11:10:19.501 3cf55 Delete type=2 #11
+2026/09/28-11:10:19.501 3cf55 Delete type=2 #9
+2026/09/28-11:12:38.739 3cf55 Level-0 table #18: started
+2026/09/28-11:12:38.743 3cf55 Level-0 table #18: 63490 bytes OK
+2026/09/28-11:12:38.746 3cf55 Delete type=0 #14
+2026/09/28-11:14:23.347 3cf55 Level-0 table #20: started
+2026/09/28-11:14:23.349 3cf55 Level-0 table #20: 43985 bytes OK
+2026/09/28-11:14:23.352 3cf55 Delete type=0 #17
+2026/09/28-11:16:34.811 3cf55 Level-0 table #22: started
+2026/09/28-11:16:34.816 3cf55 Level-0 table #22: 58741 bytes OK
+2026/09/28-11:16:34.822 3cf55 Delete type=0 #19
+2026/09/28-11:18:54.057 3cf55 Level-0 table #24: started
+2026/09/28-11:18:54.061 3cf55 Level-0 table #24: 63513 bytes OK
+2026/09/28-11:18:54.063 3cf55 Delete type=0 #21
+2026/09/28-11:18:54.066 3cf55 Compacting 4@0 + 1@1 files
+2026/09/28-11:18:54.071 3cf55 Generated table #25@0: 26 keys, 139633 bytes
+2026/09/28-11:18:54.071 3cf55 Compacted 4@0 + 1@1 files => 139633 bytes
+2026/09/28-11:18:54.072 3cf55 compacted to: files[ 0 1 1 0 0 0 0 ]
+2026/09/28-11:18:54.072 3cf55 Delete type=2 #16
+2026/09/28-11:18:54.072 3cf55 Delete type=2 #20
+2026/09/28-11:18:54.072 3cf55 Delete type=2 #22
+2026/09/28-11:18:54.072 3cf55 Delete type=2 #18
+2026/09/28-11:18:54.072 3cf55 Delete type=2 #24
+2026/09/28-11:21:13.306 3cf55 Level-0 table #27: started
+2026/09/28-11:21:13.310 3cf55 Level-0 table #27: 63446 bytes OK
+2026/09/28-11:21:13.314 3cf55 Delete type=0 #23
+2026/09/28-11:23:35.086 3cf55 Level-0 table #29: started
+2026/09/28-11:23:35.089 3cf55 Level-0 table #29: 65646 bytes OK
+2026/09/28-11:23:35.091 3cf55 Delete type=0 #26
+2026/09/28-11:25:54.333 3cf55 Level-0 table #31: started
+2026/09/28-11:25:54.338 3cf55 Level-0 table #31: 63490 bytes OK
+2026/09/28-11:25:54.342 3cf55 Delete type=0 #28
+2026/09/28-11:27:32.918 3cf55 Level-0 table #33: started
+2026/09/28-11:27:32.921 3cf55 Level-0 table #33: 63489 bytes OK
+2026/09/28-11:27:32.923 3cf55 Delete type=0 #30
+2026/09/28-11:27:32.924 3cf55 Compacting 4@0 + 1@1 files
+2026/09/28-11:27:32.928 3cf55 Generated table #34@0: 26 keys, 139625 bytes
+2026/09/28-11:27:32.928 3cf55 Compacted 4@0 + 1@1 files => 139625 bytes
+2026/09/28-11:27:32.928 3cf55 compacted to: files[ 0 1 1 0 0 0 0 ]
+2026/09/28-11:27:32.929 3cf55 Delete type=2 #29
+2026/09/28-11:27:32.929 3cf55 Delete type=2 #33
+2026/09/28-11:27:32.929 3cf55 Delete type=2 #27
+2026/09/28-11:27:32.929 3cf55 Delete type=2 #31
+2026/09/28-11:27:32.929 3cf55 Delete type=2 #25

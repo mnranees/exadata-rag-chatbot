@@ -1,0 +1,12 @@
+2026/09/28-10:51:41.585 3cf51 Reusing MANIFEST /Users/aneesmaniyar/Downloads/ML_OPS/exadataragchatbot/oracle_km_browser_profile/Default/Local Storage/leveldb/MANIFEST-000001
+2026/09/28-10:51:41.587 3cf51 Recovering log #3
+2026/09/28-10:51:41.587 3cf51 Reusing old log /Users/aneesmaniyar/Downloads/ML_OPS/exadataragchatbot/oracle_km_browser_profile/Default/Local Storage/leveldb/000003.log 
+2026/09/28-10:54:02.793 3cf55 Level-0 table #5: started
+2026/09/28-10:54:02.800 3cf55 Level-0 table #5: 43577 bytes OK
+2026/09/28-10:54:02.807 3cf55 Delete type=0 #3
+2026/09/28-11:04:37.140 3cf55 Level-0 table #7: started
+2026/09/28-11:04:37.152 3cf55 Level-0 table #7: 10225 bytes OK
+2026/09/28-11:04:37.156 3cf55 Delete type=0 #4
+2026/09/28-11:17:37.068 3cf55 Level-0 table #9: started
+2026/09/28-11:17:37.071 3cf55 Level-0 table #9: 10191 bytes OK
+2026/09/28-11:17:37.074 3cf55 Delete type=0 #6
