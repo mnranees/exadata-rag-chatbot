@@ -259,6 +259,59 @@ def _query_terms(query):
     }
 
 
+def _exact_search_terms(query):
+    """Find hostnames, SR numbers, and Oracle error/bug IDs for exact lookup."""
+    import re
+
+    pattern = (
+        r"\b(?:4-\d{10}|(?:ORA|BUG)-?\s*\d+|"
+        r"[A-Z][A-Z0-9_-]*\d[A-Z0-9_-]*)\b"
+    )
+    terms = []
+    for value in re.findall(pattern, query, flags=re.IGNORECASE):
+        value = value.strip(".,:;!?()[]{}\"'")
+        if value and value.lower() not in {term.lower() for term in terms}:
+            terms.append(value)
+    return terms
+
+
+def retrieve_sr_documents(query):
+    """Combine semantic results with exact text matches for IDs and hostnames."""
+    docs = retriever.invoke(query)
+    exact_terms = _exact_search_terms(query)
+    exact_search_failed = False
+
+    for term in exact_terms:
+        # Case variants help with hostnames copied from logs or entered by hand.
+        for variant in dict.fromkeys((term, term.lower(), term.upper())):
+            try:
+                docs.extend(
+                    db.similarity_search(
+                        query,
+                        k=60,
+                        where_document={"$contains": variant},
+                    )
+                )
+            except Exception:
+                exact_search_failed = True
+
+    unique_docs = []
+    seen = set()
+    for doc in docs:
+        key = (
+            doc.metadata.get("sr_id"),
+            doc.metadata.get("source"),
+            doc.page_content,
+        )
+        if key not in seen:
+            seen.add(key)
+            unique_docs.append(doc)
+
+    if exact_search_failed:
+        st.caption("Exact host/SR lookup was unavailable; showing semantic search results.")
+    return unique_docs
+
+
 def rank_km_documents(query, docs, max_articles=5):
     """Rank Oracle Knowledge articles so one article's chunks do not dominate."""
     query_terms = _query_terms(query)
@@ -376,8 +429,13 @@ def build_sr_context(query, ranked_articles, max_chunks_per_article=4):
     return context_docs
 
 
-def build_sr_search_fallback(docs, max_records=3, max_chars_per_record=900):
+def build_sr_search_fallback(query, docs, max_records=3, max_chars_per_record=900):
     """Show retrieved SR excerpts when the LLM cannot confirm a direct answer."""
+    query_lower = query.lower()
+    is_staffing_query = (
+        any(word in query_lower for word in ("support", "available", "standby", "engineer"))
+        and any(word in query_lower for word in ("change", "maintenance", "patch", "upgrade"))
+    )
     grouped = {}
     for doc in docs:
         sr_id = (
@@ -389,6 +447,12 @@ def build_sr_search_fallback(docs, max_records=3, max_chars_per_record=900):
         grouped.setdefault(sr_id, []).append(doc)
 
     if not grouped:
+        if is_staffing_query:
+            return (
+                "\n\nNo matching SR passages were retrieved. Historical SRs also cannot confirm "
+                "current staffing. For a live support check, include the planned date, time and "
+                "timezone, plus the SR or change request ID."
+            )
         return (
             "\n\nNo matching SR passages were retrieved. Add the exact error text, "
             "an ORA or BUG number, the operation that failed, and the Exadata/GI version."
@@ -416,10 +480,16 @@ def build_sr_search_fallback(docs, max_records=3, max_chars_per_record=900):
             reference = f"[{reference} — Open SR]({source})"
         lines.append(f"\n- **{reference}: {title}**\n  {excerpt}")
 
-    lines.append(
-        "\n\nFor a more precise match, include the full error message and what ACFS "
-        "was doing when it appeared (for example, mount, patch, upgrade, or filesystem check)."
-    )
+    if is_staffing_query:
+        lines.append(
+            "\n\nHistorical SRs cannot confirm current staffing. For a live support check, "
+            "include the planned date, time and timezone, plus the SR or change request ID."
+        )
+    else:
+        lines.append(
+            "\n\nFor a more precise match, include the exact error message, an ORA/BUG number, "
+            "the operation that failed, and the relevant host or software version."
+        )
     return "\n".join(lines)
 
 @st.cache_resource
@@ -468,7 +538,11 @@ system_prompt = (
     "Keep the answer concise and technical. When useful, mention the document title or identifier. "
     "For Service Requests, distinguish customer statements, Oracle support actions, findings, "
     "workarounds, and resolution status. Do not turn one historical SR statement into a general "
-    "Oracle recommendation. Preserve important dates and qualifiers.\n\nContext:\n{context}"
+    "Oracle recommendation. Preserve important dates and qualifiers. Historical SRs do not confirm "
+    "live support staffing or availability. For a planned change, only say support is available if "
+    "retrieved content explicitly confirms the assignment, date, and time. Otherwise say the retrieved "
+    "records do not confirm staffing; do not claim the host or its records are absent from the full "
+    "index. Ask for the planned date/time and SR number when needed.\n\nContext:\n{context}"
 )
 prompt = ChatPromptTemplate.from_messages([
     ("system", system_prompt),
@@ -487,7 +561,10 @@ if user_query := st.chat_input(f"Ask a technical question about {selected_kb}...
     with st.chat_message("assistant"):
         with st.spinner(f"Searching {selected_kb}..."):
             try:
-                retrieved_docs = retriever.invoke(user_query)
+                if selected_kb == "Service Requests":
+                    retrieved_docs = retrieve_sr_documents(user_query)
+                else:
+                    retrieved_docs = retriever.invoke(user_query)
 
                 if selected_kb == "Oracle Knowledge":
                     ranked_articles = rank_km_documents(
@@ -580,11 +657,21 @@ if user_query := st.chat_input(f"Ask a technical question about {selected_kb}...
                     )
 
                     normalized_response = assistant_response.strip().lower()
+                    inconclusive_markers = (
+                        "i don't know",
+                        "i do not know",
+                        "does not contain any information",
+                        "no information regarding",
+                        "couldn't find",
+                        "could not find",
+                        "not present in retrieved",
+                        "not found in retrieved",
+                    )
                     if (
                         selected_kb == "Service Requests"
-                        and normalized_response.startswith(("i don't know", "i do not know"))
+                        and any(marker in normalized_response for marker in inconclusive_markers)
                     ):
-                        assistant_response += build_sr_search_fallback(source_docs)
+                        assistant_response += build_sr_search_fallback(user_query, source_docs)
 
                     citation_lines = []
                     seen_sources = set()
