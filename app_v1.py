@@ -375,6 +375,53 @@ def build_sr_context(query, ranked_articles, max_chunks_per_article=4):
 
     return context_docs
 
+
+def build_sr_search_fallback(docs, max_records=3, max_chars_per_record=900):
+    """Show retrieved SR excerpts when the LLM cannot confirm a direct answer."""
+    grouped = {}
+    for doc in docs:
+        sr_id = (
+            doc.metadata.get("sr_id")
+            or doc.metadata.get("source")
+            or doc.metadata.get("title")
+            or str(id(doc))
+        )
+        grouped.setdefault(sr_id, []).append(doc)
+
+    if not grouped:
+        return (
+            "\n\nNo matching SR passages were retrieved. Add the exact error text, "
+            "an ORA or BUG number, the operation that failed, and the Exadata/GI version."
+        )
+
+    lines = [
+        "\n\n**Closest matching Service Requests**",
+        "These are historical examples; they may describe different symptoms or environments.",
+    ]
+    for sr_id, record_docs in list(grouped.items())[:max_records]:
+        doc = record_docs[0]
+        title = doc.metadata.get("title") or "Untitled Service Request"
+        source = doc.metadata.get("source")
+        excerpts = [
+            item.page_content.strip()
+            for item in record_docs[:2]
+            if item.page_content and item.page_content.strip()
+        ]
+        excerpt = "\n\n".join(excerpts)
+        if len(excerpt) > max_chars_per_record:
+            excerpt = excerpt[:max_chars_per_record].rstrip() + "..."
+
+        reference = f"SR `{sr_id}`"
+        if source:
+            reference = f"[{reference} — Open SR]({source})"
+        lines.append(f"\n- **{reference}: {title}**\n  {excerpt}")
+
+    lines.append(
+        "\n\nFor a more precise match, include the full error message and what ACFS "
+        "was doing when it appeared (for example, mount, patch, upgrade, or filesystem check)."
+    )
+    return "\n".join(lines)
+
 @st.cache_resource
 def build_llm(provider, model, api_key, base_url, temperature):
     if provider == "No LLM - Documentation Search":
@@ -414,7 +461,9 @@ system_prompt = (
     f"You are an expert technical assistant specializing in {kb['label']}. "
     f"The selected knowledge source is {selected_kb}.\n\n"
     "Answer using only retrieved content from the selected knowledge source. "
-    "If it does not contain the answer, say that you don't know. "
+    "Do not answer only 'I don't know.' If the retrieved content does not establish a direct answer, "
+    "say what is missing and ask one focused follow-up question. For broad Service Request queries, "
+    "summarize the closest retrieved SRs as historical examples even when none confirms a fix. "
     "Do not introduce unsupported information or mix knowledge sources. "
     "Keep the answer concise and technical. When useful, mention the document title or identifier. "
     "For Service Requests, distinguish customer statements, Oracle support actions, findings, "
@@ -529,6 +578,13 @@ if user_query := st.chat_input(f"Ask a technical question about {selected_kb}...
                     assistant_response = question_answer_chain.invoke(
                         {"input": user_query, "context": source_docs}
                     )
+
+                    normalized_response = assistant_response.strip().lower()
+                    if (
+                        selected_kb == "Service Requests"
+                        and normalized_response.startswith(("i don't know", "i do not know"))
+                    ):
+                        assistant_response += build_sr_search_fallback(source_docs)
 
                     citation_lines = []
                     seen_sources = set()
